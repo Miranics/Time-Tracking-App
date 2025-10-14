@@ -17,6 +17,15 @@ class ProjectTaskManagementScreen extends StatefulWidget {
 class _ProjectTaskManagementScreenState
     extends State<ProjectTaskManagementScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<TimeEntryProvider>();
+      provider.ensureInitialized();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provider = context.watch<TimeEntryProvider>();
     final projects = provider.projects;
