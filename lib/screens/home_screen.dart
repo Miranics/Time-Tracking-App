@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../providers/time_entry_provider.dart';
+import '../widgets/app_drawer.dart';
 import 'add_time_entry_screen.dart';
 import 'project_task_management_screen.dart';
 
@@ -12,6 +13,15 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   static const routeName = '/';
+
+  Future<void> _openProjectManager(BuildContext context) async {
+    final provider = context.read<TimeEntryProvider>();
+    await Navigator.of(context)
+        .pushNamed(ProjectTaskManagementScreen.routeName);
+    if (context.mounted) {
+      await provider.reload();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,12 +31,12 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.of(context)
-                .pushNamed(ProjectTaskManagementScreen.routeName),
+            onPressed: () => _openProjectManager(context),
             tooltip: 'Manage projects and tasks',
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       floatingActionButton: Consumer<TimeEntryProvider>(
         builder: (context, provider, child) {
           return FloatingActionButton(
@@ -37,9 +47,12 @@ class HomeScreen extends StatelessWidget {
                     final result = await Navigator.of(context)
                         .pushNamed(AddTimeEntryScreen.routeName);
                     if (result == true) {
-                      messenger.showSnackBar(
-                        const SnackBar(content: Text('Time entry added.')),
-                      );
+                      await provider.reload();
+                      if (context.mounted) {
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Time entry added.')),
+                        );
+                      }
                     }
                   },
             child: const Icon(Icons.add),
@@ -53,10 +66,9 @@ class HomeScreen extends StatelessWidget {
           }
 
           if (provider.projects.isEmpty) {
-            return _EmptyState(onManageProjects: () {
-              Navigator.of(context)
-                  .pushNamed(ProjectTaskManagementScreen.routeName);
-            });
+            return _EmptyState(
+              onManageProjects: () => _openProjectManager(context),
+            );
           }
 
           return RefreshIndicator(
@@ -76,7 +88,7 @@ class HomeScreen extends StatelessWidget {
         duration: Duration(seconds: 3),
       ),
     );
-    Navigator.of(context).pushNamed(ProjectTaskManagementScreen.routeName);
+    _openProjectManager(context);
   }
 }
 
@@ -111,19 +123,21 @@ class _ProjectList extends StatelessWidget {
             ),
             childrenPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            children: projectEntries.isEmpty
-                ? [
-                    const ListTile(
-                      title: Text('Tap the + button to add a time entry.'),
-                    ),
-                  ]
-                : projectEntries
-                    .map((entry) => _TimeEntryTile(
-                          entry: entry,
-                          project: project,
-                          dateFormat: dateFormat,
-                        ))
-                    .toList(),
+            children: [
+              if (projectEntries.isEmpty)
+                const ListTile(
+                  title: Text('Tap the + button to add a time entry.'),
+                )
+              else
+                ...projectEntries.map(
+                  (entry) => _TimeEntryTile(
+                    entry: entry,
+                    project: project,
+                    dateFormat: dateFormat,
+                  ),
+                ),
+              _TaskSummaryList(project: project, provider: provider),
+            ],
           ),
         );
       },
@@ -219,7 +233,7 @@ class _TimeEntryTile extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   const _EmptyState({required this.onManageProjects});
 
-  final VoidCallback onManageProjects;
+  final Future<void> Function() onManageProjects;
 
   @override
   Widget build(BuildContext context) {
@@ -246,13 +260,82 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: onManageProjects,
+              onPressed: () {
+                onManageProjects();
+              },
               icon: const Icon(Icons.add),
               label: const Text('Create project'),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TaskSummaryList extends StatelessWidget {
+  const _TaskSummaryList({
+    required this.project,
+    required this.provider,
+  });
+
+  final Project project;
+  final TimeEntryProvider provider;
+
+  @override
+  Widget build(BuildContext context) {
+    final projectEntries = provider.entriesForProject(project.id);
+    final hasGeneralEntries =
+        provider.totalMinutesWithoutTask(project.id) > 0 ||
+            projectEntries.any((entry) => entry.taskId == null);
+
+    final hasTasks = project.tasks.isNotEmpty;
+
+    if (!hasTasks && !hasGeneralEntries) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Text(
+            'Task breakdown',
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ),
+        if (hasGeneralEntries)
+          ListTile(
+            dense: true,
+            leading: const Icon(Icons.workspaces_outline),
+            title: const Text('General'),
+            subtitle: const Text('Entries without a specific task'),
+            trailing: Text(
+              _ProjectList._formatTotal(
+                provider.totalMinutesWithoutTask(project.id),
+              ),
+            ),
+          ),
+        if (hasTasks)
+          ...project.tasks.map((task) {
+            final minutes =
+                provider.totalMinutesForTask(project.id, task.id);
+            return ListTile(
+              dense: true,
+              leading: const Icon(Icons.check_circle_outline),
+              title: Text(task.name),
+              subtitle: task.description == null
+                  ? null
+                  : Text(task.description!),
+              trailing: Text(_ProjectList._formatTotal(minutes)),
+            );
+          }),
+      ],
     );
   }
 }

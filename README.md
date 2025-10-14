@@ -4,11 +4,11 @@ A lightweight Flutter app for logging time against projects and tasks. Entries a
 
 ## Features
 
-- 📋 Manage projects and their tasks from the in-app settings screen.
+- 📋 Manage projects and their tasks from the management screen or hamburger menu.
 - ⏱️ Log time entries with project, task, duration, date, and optional notes.
-- 📊 View entries grouped by project with total time summaries.
-- 🗑️ Swipe to delete incorrect entries.
-- 💾 Local storage via the `localstorage` package keeps your data across sessions.
+- 📊 View entries grouped by project with total time summaries and task breakdowns.
+- 🗑️ Swipe to delete incorrect entries with confirmation prompts.
+- 💾 Inspect and clear persisted data through an in-app storage viewer backed by the `localstorage` package.
 
 ## Getting started
 
@@ -25,7 +25,15 @@ flutter pub get
 flutter run
 ```
 
-The home screen shows each project with its recent time entries. Use the **+** button to add a new entry. If no projects exist yet, you'll be prompted to create one first.
+The home screen shows each project with its recent time entries. Use the **+** button or the hamburger menu to add a new entry. If no projects exist yet, you'll be prompted to create one first.
+
+## Navigation cheat-sheet (for screenshots)
+
+- **Hamburger menu** – Open from the home screen to reach Add Entry, Project/Task management, and the Local Storage Viewer screens.
+- **Empty state** – Launch after clearing storage from the viewer to capture the empty home screen.
+- **Add Time Entry form** – Accessible via the FAB or menu; choose a project, optional task, duration, date, and notes before saving.
+- **Project management** – Lists projects with a floating **+** button; dialogs allow creating and deleting projects and tasks.
+- **Local Storage Viewer** – Presents JSON snapshots of saved projects/time entries plus a "Clear all" button for quick resets.
 
 ## Test suite
 

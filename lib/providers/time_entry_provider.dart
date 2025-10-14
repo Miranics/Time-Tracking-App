@@ -197,6 +197,14 @@ class TimeEntryProvider extends ChangeNotifier {
         .toList(growable: false);
   }
 
+  List<TimeEntry> entriesForTask(String projectId, String taskId) {
+    return _entries
+        .where(
+          (entry) => entry.projectId == projectId && entry.taskId == taskId,
+        )
+        .toList(growable: false);
+  }
+
   int totalMinutesForProject(String projectId) {
     return _entries
         .where((entry) => entry.projectId == projectId)
@@ -205,6 +213,20 @@ class TimeEntryProvider extends ChangeNotifier {
 
   double totalHoursForProject(String projectId) {
     return totalMinutesForProject(projectId) / 60;
+  }
+
+  int totalMinutesForTask(String projectId, String taskId) {
+    return _entries
+        .where(
+          (entry) => entry.projectId == projectId && entry.taskId == taskId,
+        )
+        .fold<int>(0, (total, entry) => total + entry.minutesSpent);
+  }
+
+  int totalMinutesWithoutTask(String projectId) {
+    return _entries
+        .where((entry) => entry.projectId == projectId && entry.taskId == null)
+        .fold<int>(0, (total, entry) => total + entry.minutesSpent);
   }
 
   String generateId() {

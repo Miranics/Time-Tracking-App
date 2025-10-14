@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'providers/time_entry_provider.dart';
 import 'screens/add_time_entry_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/local_storage_viewer_screen.dart';
 import 'screens/project_task_management_screen.dart';
 
 void main() {
@@ -29,6 +30,8 @@ class TimeTrackerApp extends StatelessWidget {
           AddTimeEntryScreen.routeName: (context) => const AddTimeEntryScreen(),
           ProjectTaskManagementScreen.routeName: (context) =>
               const ProjectTaskManagementScreen(),
+          LocalStorageViewerScreen.routeName: (context) =>
+              const LocalStorageViewerScreen(),
         },
       ),
     );
