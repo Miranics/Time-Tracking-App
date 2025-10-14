@@ -52,6 +52,30 @@ void main() {
       expect(reloaded.first.name, 'Reloadable Project');
     });
 
+    test('projects persist across provider instances', () async {
+      const storageKey = 'time_tracker_cross_instance_test.json';
+      final sharedStorage = LocalStorage(storageKey);
+
+      final firstProvider = TimeEntryProvider(storage: sharedStorage);
+      await firstProvider.initialize();
+      await firstProvider.clearAll();
+
+      final project = Project(
+        id: firstProvider.generateId(),
+        name: 'Cross Instance',
+      );
+
+      await firstProvider.addProject(project);
+
+      final secondProvider = TimeEntryProvider(storage: LocalStorage(storageKey));
+      await secondProvider.initialize();
+
+      expect(secondProvider.projects, hasLength(1));
+      expect(secondProvider.projects.first.name, 'Cross Instance');
+
+      await secondProvider.clearAll();
+    });
+
     test('can add tasks and time entries and group by project', () async {
       final project = Project(
         id: provider.generateId(),
