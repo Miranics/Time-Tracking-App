@@ -243,7 +243,9 @@ class TimeEntryProvider extends ChangeNotifier {
   }
 
   Future<void> _persistAndNotify() async {
+    await _storage.ready;
     await _persist();
+    await _loadFromStorage();
     notifyListeners();
   }
 
