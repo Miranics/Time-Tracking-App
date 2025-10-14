@@ -244,32 +244,19 @@ class TimeEntryProvider extends ChangeNotifier {
 
   Future<void> _persistAndNotify() async {
     await _storage.ready;
-    final persisted = await _persist();
-
-    if (persisted) {
-      await _loadFromStorage();
-    }
-
+    await _persist();
+    await _loadFromStorage();
     notifyListeners();
   }
 
-  Future<bool> _persist() async {
-    final projectsJson =
-        _projects.map((project) => project.toJson()).toList(growable: false);
-    final entriesJson =
-        _entries.map((entry) => entry.toJson()).toList(growable: false);
-
-    final projectsResult = await _storage.setItem('projects', projectsJson);
-    final entriesResult = await _storage.setItem('timeEntries', entriesJson);
-
-    final projectsSaved = projectsResult != false;
-    final entriesSaved = entriesResult != false;
-
-    if (!projectsSaved || !entriesSaved) {
-      return false;
-    }
-
-    final saveResult = await _storage.save();
-    return saveResult != false;
+  Future<void> _persist() async {
+    await _storage.setItem(
+      'projects',
+      _projects.map((project) => project.toJson()).toList(),
+    );
+    await _storage.setItem(
+      'timeEntries',
+      _entries.map((entry) => entry.toJson()).toList(),
+    );
   }
 }
