@@ -36,6 +36,22 @@ void main() {
       expect(provider.projects.first.name, 'Client A');
     });
 
+    test('projects persist after reload', () async {
+      final project = Project(
+        id: provider.generateId(),
+        name: 'Reloadable Project',
+      );
+
+      await provider.addProject(project);
+
+      await provider.reload();
+
+      final reloaded = provider.projects;
+
+      expect(reloaded, hasLength(1));
+      expect(reloaded.first.name, 'Reloadable Project');
+    });
+
     test('can add tasks and time entries and group by project', () async {
       final project = Project(
         id: provider.generateId(),
